@@ -1,4 +1,5 @@
 import random
+from csp import SudokuCSP
 
 GRID_SIZE = 9
 
@@ -98,9 +99,38 @@ def generate_unique_solvable_sudoku(level='easy'):
     return grid
 
 
-grid = generate_unique_solvable_sudoku('medium')
+grid = generate_unique_solvable_sudoku('hard')
 for row in grid:
     print(row)
 
 print(is_unique_solution(grid))
 print(solve(grid))
+
+flag = True
+
+csp = SudokuCSP(grid)
+sol = csp.solve()
+# check sol
+for i in range(9):
+    for j in range(9):
+        for k in range(9):
+            if sol[i][k] == sol[i][j] and k != j:
+                print("Fail")
+                flag = False
+                break
+            if sol[k][j] == sol[i][j] and k != i:
+                print("Fail")
+                flag = False
+                break
+        for r in range(3 * (i // 3), 3 * (i // 3) + 3):
+            for c in range(3 * (j // 3), 3 * (j // 3) + 3):
+                if sol[r][c] == sol[i][j] and r != i and c != j:
+                    print("Fail")
+                    flag = False
+                    break
+
+for row in sol:
+    print(row)
+
+if flag:
+    print("Pass")
