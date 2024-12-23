@@ -64,7 +64,7 @@ class SudokuCSP:
             Xi, Xj = queue.pop(0)
             prev_domain = copy.deepcopy(self.domains[Xi])
             if self.revise(Xi, Xj):
-                self.revision_steps.append(f"The domain of Variable {Xj} became {self.domains[Xj]}\nSo, Variable: {Xi} Revised with respect to {Xj} from: {prev_domain} to: {self.domains[Xi]}\n")
+                self.revision_steps.append(f"The domain of Variable {Xj} is {self.domains[Xj]}\nSo, Variable: {Xi} Revised with respect to {Xj} from: {prev_domain} to: {self.domains[Xi]}\n")
                 if len(self.domains[Xi]) == 0:
                     return False
                 for Xk in self.neighbours[Xi]:
