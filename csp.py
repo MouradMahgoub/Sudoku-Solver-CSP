@@ -7,6 +7,7 @@ class SudokuCSP:
         self.variables = []
         self.domains = {}
         self.neighbours = {}
+        self.revision_steps = []
         self.generate_variables()
         self.generate_domains()
         self.generate_neighbours()
@@ -61,7 +62,9 @@ class SudokuCSP:
         queue = [(Xi, Xj) for Xi in self.neighbours[Xj]]
         while queue:
             Xi, Xj = queue.pop(0)
+            prev_domain = copy.deepcopy(self.domains[Xi])
             if self.revise(Xi, Xj):
+                self.revision_steps.append(f"The domain of Variable {Xj} became {self.domains[Xj]}\nSo, Variable: {Xi} Revised with respect to {Xj} from: {prev_domain} to: {self.domains[Xi]}\n")
                 if len(self.domains[Xi]) == 0:
                     return False
                 for Xk in self.neighbours[Xi]:
@@ -99,7 +102,8 @@ class SudokuCSP:
             if self.is_valid(var, value):
                 
                 original_domains = copy.deepcopy(self.domains)
-                old_board = copy.deepcopy(self.board)
+                original_board = copy.deepcopy(self.board)
+                original_revision_steps = copy.deepcopy(self.revision_steps)
                 
                 # self.board[i][j] = value
                 self.domains[var] = {value}
@@ -107,10 +111,14 @@ class SudokuCSP:
                 if self.ac3(var):
                     self.update_board()
                     if self.backtrack():
+                        # write revision steps to a file
+                        with open("revision_steps.txt", "w") as f:
+                            f.write("\n".join(self.revision_steps))
                         return True
                     
-                self.board = old_board
+                self.board = original_board
                 self.domains = original_domains
+                self.revision_steps = original_revision_steps
                 
         return False
     
