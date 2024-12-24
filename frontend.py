@@ -37,7 +37,7 @@ class SudokuGUI:
                        value="1", command=self.change_mode).grid(row=0, column=0, padx=5)
         ttk.Radiobutton(mode_frame, text="User Input", variable=self.mode,
                        value="2", command=self.change_mode).grid(row=0, column=1, padx=5)
-        ttk.Radiobutton(mode_frame, text="Generate Puzzle", variable=self.mode,
+        ttk.Radiobutton(mode_frame, text="Play Game", variable=self.mode,
                         value="3", command=self.change_mode).grid(row=0, column=2, padx=5)
         
         # Create the grid in left frame
@@ -131,8 +131,6 @@ class SudokuGUI:
                 cell.bind('<KeyRelease>', lambda e, i=i, j=j: self.validate_input(e, i, j))
     
     def validate_input(self, event, i, j):
-        if self.mode.get() == "1":
-            return
         if self.mode.get() == "2" or self.mode.get() == "3":
             cell = self.cells[(i, j)]
             value = cell.get()
@@ -196,6 +194,11 @@ class SudokuGUI:
     
     def change_mode(self):
         self.clear_board()
+        for cell in self.cells.values():
+            if self.mode.get() == "1":  # AI Solver mode
+                cell.configure(state='disabled')  # Disable all cells
+            elif self.mode.get in ("2", "3"):  # User Input or Play Game mode
+                cell.configure(state='normal')
     
     def generate_puzzle(self):
         if self.is_generating:
