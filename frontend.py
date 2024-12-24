@@ -13,6 +13,7 @@ class SudokuGUI:
         self.root.title("Sudoku Solver")
         self.cells = {}
         self.mode = tk.StringVar(value="1")
+        self.difficulty = tk.StringVar(value="easy")  # Add difficulty variable
         self.is_solving = False
         self.is_generating = False
         self.current_board = [[0]*9 for _ in range(9)]
@@ -21,21 +22,30 @@ class SudokuGUI:
         self.main_frame = ttk.Frame(root, padding="10")
         self.main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
-        # Mode selection
-        ttk.Label(self.main_frame, text="Mode:").grid(row=0, column=0, pady=5)
-        ttk.Radiobutton(self.main_frame, text="AI Solver", variable=self.mode, 
-                       value="1", command=self.change_mode).grid(row=0, column=1)
-        ttk.Radiobutton(self.main_frame, text="User Input", variable=self.mode,
-                       value="2", command=self.change_mode).grid(row=0, column=2)
-        ttk.Radiobutton(self.main_frame, text="Generate Puzzle", variable=self.mode,
-                        value="3", command=self.change_mode).grid(row=0, column=3)
+        # Create left and right frames for better organization
+        left_frame = ttk.Frame(self.main_frame)
+        left_frame.grid(row=0, column=0, padx=10)
         
-        # Create the grid
-        self.create_grid()
+        right_frame = ttk.Frame(self.main_frame)
+        right_frame.grid(row=0, column=1, padx=10, sticky=(tk.N))
         
-        # Buttons
-        button_frame = ttk.Frame(self.main_frame)
-        button_frame.grid(row=2, column=0, columnspan=3, pady=10)
+        # Mode selection in left frame
+        mode_frame = ttk.LabelFrame(left_frame, text="Mode")
+        mode_frame.grid(row=0, column=0, pady=5, sticky=(tk.W, tk.E))
+        
+        ttk.Radiobutton(mode_frame, text="AI Solver", variable=self.mode, 
+                       value="1", command=self.change_mode).grid(row=0, column=0, padx=5)
+        ttk.Radiobutton(mode_frame, text="User Input", variable=self.mode,
+                       value="2", command=self.change_mode).grid(row=0, column=1, padx=5)
+        ttk.Radiobutton(mode_frame, text="Generate Puzzle", variable=self.mode,
+                        value="3", command=self.change_mode).grid(row=0, column=2, padx=5)
+        
+        # Create the grid in left frame
+        self.create_grid_frame(left_frame)
+        
+        # Buttons in left frame
+        button_frame = ttk.Frame(left_frame)
+        button_frame.grid(row=3, column=0, pady=10)
         
         ttk.Button(button_frame, text="Generate Puzzle", 
                   command=self.generate_puzzle).grid(row=0, column=0, padx=5)
@@ -44,16 +54,56 @@ class SudokuGUI:
         ttk.Button(button_frame, text="Clear", 
                   command=self.clear_board).grid(row=0, column=2, padx=5)
         
-        # Arc consistency visualization
-        self.arc_frame = ttk.LabelFrame(self.main_frame, text="Arc Consistency Steps")
-        self.arc_frame.grid(row=3, column=0, columnspan=3, pady=10)
+        # Arc consistency visualization in left frame
+        self.arc_frame = ttk.LabelFrame(left_frame, text="Arc Consistency Steps")
+        self.arc_frame.grid(row=4, column=0, pady=10)
         self.arc_text = tk.Text(self.arc_frame, height=6, width=50)
         self.arc_text.grid(row=0, column=0, padx=5, pady=5)
         
+        # Difficulty selection in right frame
+        difficulty_frame = ttk.LabelFrame(right_frame, text="Difficulty Level")
+        difficulty_frame.grid(row=0, column=0, pady=5, sticky=(tk.W, tk.E, tk.N))
+        
+        difficulties = [("Easy", "easy"), ("Medium", "medium"), ("Hard", "hard")]
+        for i, (text, value) in enumerate(difficulties):
+            ttk.Radiobutton(difficulty_frame, text=text, variable=self.difficulty,
+                          value=value).grid(row=i, column=0, padx=10, pady=5, sticky=tk.W)
+
+    def create_grid_frame(self, parent):
+        grid_frame = ttk.Frame(parent)
+        grid_frame.grid(row=1, column=0, pady=10)
+    
+        for i in range(9):
+            for j in range(9):
+                cell_frame = ttk.Frame(
+                    grid_frame,
+                    borderwidth=1,
+                    relief="solid"
+                )
+                cell_frame.grid(row=i, column=j, padx=1, pady=1)
+                cell = ttk.Entry(
+                    cell_frame,
+                    width=2,
+                    justify='center',
+                    font=('Arial', 18)
+                )
+                cell.grid(padx=2, pady=2)
+                self.cells[(i, j)] = cell
+                
+                # Add thicker borders for 3x3 boxes
+                if i % 3 == 0 and i != 0:
+                    cell_frame.grid(pady=(3, 1))
+                if j % 3 == 0 and j != 0:
+                    cell_frame.grid(padx=(3, 1))
+                
+                # Bind validation for user input mode
+                cell.bind('<KeyRelease>', lambda e, i=i, j=j: self.validate_input(e, i, j))
+
+
     def create_grid(self):
         grid_frame = ttk.Frame(self.main_frame)
         grid_frame.grid(row=1, column=0, columnspan=3, pady=10)
-        
+    
         for i in range(9):
             for j in range(9):
                 cell_frame = ttk.Frame(
@@ -156,8 +206,8 @@ class SudokuGUI:
         self.is_generating = True
         self.clear_board()
         
-        # Update GUI
-        self.current_board = SudokuGenerator.generate_unique_solvable_sudoku('hard')
+        # Update GUI with selected difficulty
+        self.current_board = SudokuGenerator.generate_unique_solvable_sudoku(self.difficulty.get())
         self.update_gui_from_board()
         self.is_generating = False
         if self.mode.get() == "3":
